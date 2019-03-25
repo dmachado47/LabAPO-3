@@ -12,12 +12,23 @@ public class clinicHistory{
 	private String symptoms;
 	private String diagnostic;
 	
-	public clinicHistory(int status, String xingressDate, String xsymptoms, String xdiagnostic){
+	//Relacition
+	private Animal animalData;
+	private User ownerData;
+	private ArrayList<Medicine> medicinesHistory;
+	
+	public ClinicHistory(int status, String xingressDate, String xsymptoms, String xdiagnostic, Animal xAnimalData, User xOwnerData
+							ArrayList<Medicine> xmedicines){
 	
 		status = xstatus;
 		ingressDate = xingressDate; 
 		symptoms = xsymptoms;
 		diagnostic = xdiagnostic;
+		
+		animalData = xAnimalData;
+		ownerData = xOwnerData;
+		medicinesHistory = xmedicines;
+		
 	}
 	
 	//getters
