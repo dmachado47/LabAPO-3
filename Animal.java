@@ -13,6 +13,7 @@ public class Animal{
 	private String animalType;
 	private int age;
 	private double weight;
+	private String animalMedicines;
 	
 	
 	public Animal(String xpetName, String xanimalType, int xage, double xweight){
@@ -37,6 +38,9 @@ public class Animal{
 	public double getweight(){
 		return weight;
 	}
+	public String getanimalMedicines(){
+		return animalMedicines;
+	}
 	
 	//setters
 	
@@ -52,5 +56,7 @@ public class Animal{
 	public void setweight (double xweight){
 		weight = xweight;
 	}
-	
+	public String setanimalMedicines(String xanimalMedicines){
+		return xanimalMedicines;
+	}
 }

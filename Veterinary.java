@@ -25,11 +25,13 @@ public class Veterinary {
 		//Buscar usuario
 	public User searchUser(int xid){
 		User searching = null;
+		boolean found = false;
 		int numberUsers = people.size();
-		for (int j=0; j<numberUsers; j++){
+		for (int j=0; j<numberUsers && !found; j++){
 			int idSearch = people.get(j).getidNumber(); 
 			if (xid == idSearch){
 				searching = people.get(j);
+				found = true;
 			}
 		}
 		return searching;
@@ -46,26 +48,28 @@ public class Veterinary {
 		return registered;
 	}
 		//Buscar disponiblidad en los minicuartos
-	public Miniroom searchAvailable(){
-		Miniroom available = null;
-		for (int i=0; i<NUMBER_ROOMS; i++){
+	public int searchAvailable(){
+		int available = -1;
+		boolean exists = false;
+		for (int i=0; i<NUMBER_ROOMS && !exists; i++){
 			if (rooms[i].getAnimal()==null){
-				available = rooms[i];
+				available = i;
+				exists = true;
 			}
 		}
 		return available;
 	}
 		//Añadir mascota al minicuarto
-	public boolean addPettoMiniroom(int xOwner, String xPet){
-		boolean add = false;
+	public int addPettoMiniroom(int xOwner, String xPet){
+		int add = -1;
 		User u = searchUser(xOwner);
 		if( u != null){
 			Animal a = u.searchPet(xPet);
 			if(a != null){
-				Miniroom x = searchAvailable();
+				Miniroom x = rooms[searchAvailable()];
 				if(x != null){
 					x.setAnimal(a);
-					add = true;
+					add = searchAvailable;
 				}
 			}
 		}
@@ -87,14 +91,47 @@ public class Veterinary {
 		return searching;
 	}
 	
+	public Animal searchPetByRoom(String xName){
+		Animal pet = null;
+		boolean exists = false;
+		for (int i=0; i<NUMBER_ROOMS && !exists; i++){
+			Animal ta = rooms[i].getAnimal();
+			if (ta != null){
+				if(ta.getpetName().equals(xName)){
+					available = i;
+					exists = true;
+				}
+			}
+		}
+		return pet;
+	}
+	
+	public int removePetFromMiniroom(String xPet){
+		int remove = -1;
+		boolean cleared = true;
+		for (int i=0; i<NUMBER_ROOMS && !exists; i++){
+			Animal ta = rooms[i].getAnimal();
+			if (ta != null){
+				if(ta.getpetName().equals(xName)){
+					rooms[i].setAnimal(null);
+					remove = i;
+					cleared = true;
+				}
+			}
+		}
+		return remove;
+	}
+	
 		//
 	public boolean hospitalize(int idOwner, String xPet, String xdate, String xsym, String xdiag, ArrayList<Medicine> xmed){
 		boolean hospitalized = false;
-		boolean petinMiniroom = addPettoMiniroom(idOwner, xPet);
-		if(petinMiniroom){
+		int petinMiniroom = addPettoMiniroom(idOwner, xPet);
+		if(petinMiniroom != -1){
 			User owner = searchUser(idOwner);
 			Animal a = owner.searchPet(xPet);
-			ClinicHistory history = new ClinicHistory(ClinicHistory.ABIERTA, xdate, xsym, xdiag, a, owner, xmed);
+			Miniroom associated = rooms[petinMiniroom];
+			ClinicHistory history = new ClinicHistory(ClinicHistory.ABIERTA, xdate, xsym, xdiag, a, owner, xmed, associated);
+			histories.add(history);
 			hospitalized = true;
 		}
 		return hospitalized;
@@ -105,35 +142,7 @@ public class Veterinary {
 		int numberHistory = histories.size();
 		for(int i=0; i < numberHistory; i++){
 			ClinicHistory temp = histories.get(i);
-			report += "// ---------------------------------------- // \n";
-			report += "Nombre Paciente: " + temp.getAnimalData().getpetName() + "\n";
-			report += "Tipo de animal: " + temp.getAnimalData().getanimalType() + "\n";
-			report += "Edad: " + temp.getAnimalData().getage() + " años \n";
-			report += "Peso: " + temp.getAnimalData().getweight() + " Kg. \n \n";
-			
-			if(temp.getStatus()==ClinicHistory.ABIERTA){
-				report += "Estado actual: Abierta \n";
-			} else {
-				report += "Estado actual: Cerrada \n";
-			}
-			
-			// Date d = temp.getingressDate()";
-			report += "Fecha de hospitalización: " + temp.getIngressDate() + "\n";
-			report += "Síntomas: " + temp.getsymptoms() + "\n";
-			report += "Diagnóstico: " + temp.getdiagnostic() + "\n \n";
-			
-			report += "Medicamentos recetados: " + temp.getsymptoms() + "\n";
-			ArrayList<Medicine> m = temp.getmedicinesHistory();
-			for (int j=0; j < m.size(); j++){
-				String dn = m.get(i).getdrugName();
-				int dose = m.get(i).getdose();
-				double dcost = m.get(i).getdoseCost();
-				int freq = m.get(i).getdoseFrequency();
-				
-				// Formato: "- Amoxicilina. Administrar 3 dosis cada 8 horas. Costo de la dosis: $60000."
-				report += "- " + dn + ". Administrar " + dose + " dosis cada " + freq + " horas. Costo de la dosis: $" + dcost + ".\n"; 
-			}
-			report += "\n";
+			String rt = temp.generateIndividualReport();
 		}
 		return report;	
 	}
@@ -151,6 +160,19 @@ public class Veterinary {
 		return animalHistory;
 	}
 	
+	public ClinicHistory searchHistoryByAnimal(String animalName){
+		ClinicHistory h = null;
+		boolean exists = false;
+		for (int z=0; z < histories.size() && !exists; z++){
+			String sName = histories.get(z).getpetName();
+			if (sName.equals(animalName){
+				h = histories.get(z);
+				found = true;
+			}
+		}
+		return h;
+	}
+		
 	public double calculateCostAnimalType(String type, double weight){
 		double c = 0.0;
 		if (type.equals(Animal.CAT)) {
@@ -197,6 +219,16 @@ public class Veterinary {
 		return c;
 	}
 	
+	public double calculateCostMedicineDose(ArrayList<Medicine> x){
+		double cost = 0.0;
+		for (int k=0; k < x.size(); k++){
+			double tcost = x.get(k).getdoseCost();
+			int tDose = x.get(k).getdose();
+			cost += (tcost * tDose);
+		}
+		return cost;
+	}
+	
 	public double calculateHospitalizationCost(String animal){
 		double cost = 0.0;
 		Animal a = searchAnimalByHistory(animal);
@@ -206,7 +238,52 @@ public class Veterinary {
 			double costType = calculateCostAnimalType(animalT, animalW);
 			
 			double historyCost = 0.0;
-			for (int k=0; k)
+			ClinicHistory h = searchHistoryByAnimal(animal);
+			if (h != null){
+				ArrayList<Medicine> m = h.getmedicinesHistory();
+				historyCost = calculateCostMedicineDose(m);
+			}
+			cost = costType + historyCost;
 		}
+		return cost;
+	}
+	
+	public String discharge(String petName){
+		String discharged = "";
+		Animal petRoom = searchPetByRoom(petName);
+		Animal petHistory = searchAnimalByHistory(petName);
+		if (petNameRoom != null && petNameHistory != null){
+			ClinicHistory hs = searchHistoryByAnimal(petName);
+			hs.setroomAssociated(null);
+			hs.setstatus(ClinicHistory.CERRADA);
+			int removed = removePetFromMiniroom(petName);
+			
+			discharged += "Reporte de mascota dada de alta \n \n"
+			discharged += petRoom.generateIndividualReport();
+		} else {
+			discharged += "Error! El animalito no figura en nuestra base de datos.";
+		}
+		return discharged;
+	}
+	
+	public double getHospitalizationIncomes(){
+		double incomes = 0.0;
+		for(int i = 0; i < NUMBER_ROOMS; i++){
+			Miniroom mr = rooms[i];
+			Animal s = mr.getAnimal();
+			if( s != null){
+				ArrayList<Medicine> m = s.getanimalMedicines();
+				incomes += calculateCostMedicineDose(m);
+			}
+		}
+		return incomes;		
+	}
+	
+	public boolean hasBeenAlreadyHospitalized(String pet){
+		
+	}
+	
+	public boolean appendToClinicHistory(){
+		
 	}
 }
